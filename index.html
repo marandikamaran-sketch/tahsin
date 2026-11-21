@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TahsinQuest: Eksplorasi & Game Makhorijul Huruf dan Sifatul Huruf</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Amiri, Scheherazade New & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: {
+                            850: '#04563e',
+                            900: '#064E3B',
+                            950: '#022c22',
+                        },
+                        gold: {
+                            400: '#FBBF24',
+                            500: '#F59E0B',
+                            600: '#D97706',
+                            700: '#B45309',
+                        },
+                        cream: {
+                            50: '#FDFBF7',
+                            100: '#F8F5EE',
+                            200: '#EFE9DC',
+                        }
+                    },
+                    fontFamily: {
+                        arabic: ['Amiri', 'Scheherazade New', 'serif'],
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #F8F5EE;
+            background-image: radial-gradient(#d9770615 1px, transparent 1px);
+            background-size: 24px 24px;
+            user-select: none;
+        }
+
+        .font-arabic {
+            font-family: 'Amiri', 'Scheherazade New', serif;
+            line-height: 1.6;
+        }
+
+        /* PID Mode Scaled Touch Targets */
+        .touch-mode .btn-pid {
+            min-height: 60px !important;
+            font-size: 1.25rem !important;
+            padding-left: 1.75rem !important;
+            padding-right: 1.75rem !important;
+        }
+        .touch-mode .text-arabic-giant {
+            font-size: 4.5rem !important;
+        }
+        .touch-mode .grid-pid-letters {
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)) !important;
+        }
+
+        /* Drawing Canvas Active State */
+        #annotation-canvas.active {
+            pointer-events: auto !important;
+            cursor: crosshair;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #EFE9DC;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #047857;
+            border-radius: 4px;
+        }
+
+        /* Certificate Print Styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-certificate, #printable-certificate * {
+                visibility: visible;
+            }
+            #printable-certificate {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 24px;
+                background: white !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        /* Visual Waves Animation */
+        @keyframes wave-bar {
+            0%, 100% { height: 6px; }
+            50% { height: 24px; }
+        }
+        .wave-anim {
+            animation: wave-bar 0.6s infinite ease-in-out;
+        }
+
+        /* Interactive SVG Anatomi Styling */
+        .anatomi-region {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            fill-opacity: 0.3;
+            stroke-width: 2.5;
+        }
+        .anatomi-region:hover, .anatomi-region.active {
+            fill-opacity: 0.75;
+            stroke-width: 4;
+            filter: drop-shadow(0px 0px 10px rgba(245, 158, 11, 0.9));
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col justify-between relative overflow-x-hidden">
+
+    <!-- OVERLAY BOARD CORETLAN ANOTASI PID -->
+    <canvas id="annotation-canvas" class="fixed inset-0 z-40 hidden pointer-events-none"></canvas>
+    
+    <!-- ANNOTATION TOOLBAR (Floating when Annotation Active) -->
+    <div id="annotation-toolbar" class="hidden fixed top-20 right-6 z-50 bg-emerald-950/90 backdrop-blur-md p-3 rounded-2xl border-2 border-gold-400 shadow-2xl flex items-center gap-3 text-white">
+        <span class="text-xs font-bold text-gold-300 pl-1"><i class="fa-solid fa-pen-ruler"></i> Papan Coret PID:</span>
+        <div class="flex items-center gap-1.5">
+            <button onclick="setPenColor('#ef4444')" class="w-7 h-7 rounded-full bg-red-500 border-2 border-white hover:scale-110 transition"></button>
+            <button onclick="setPenColor('#f59e0b')" class="w-7 h-7 rounded-full bg-amber-500 border-2 border-white hover:scale-110 transition"></button>
+            <button onclick="setPenColor('#10b981')" class="w-7 h-7 rounded-full bg-emerald-500 border-2 border-white hover:scale-110 transition"></button>
+        </div>
+        <button onclick="clearAnnotationCanvas()" class="px-3 py-1 bg-rose-700 hover:bg-rose-600 rounded-xl text-xs font-bold flex items-center gap-1">
+            <i class="fa-solid fa-trash-can"></i> Hapus Coretan
+        </button>
+        <button onclick="toggleAnnotationBoard()" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-bold">
+            Selesai
+        </button>
+    </div>
+
+    <!-- HEADER / TOOLBAR KHUSUS LAYAR PID -->
+    <header class="bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-850 text-white shadow-xl border-b-4 border-gold-500 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            
+            <!-- Logo & Title -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('tab1')">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-lg border-2 border-gold-300">
+                    <i class="fa-solid font-arabic text-emerald-950 text-3xl font-bold">ط</i>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-extrabold tracking-tight text-white flex items-center gap-2">
+                        TahsinQuest <span class="text-xs px-2.5 py-0.5 rounded-full bg-gold-500/20 text-gold-400 border border-gold-500/40">Media PID Interaktif</span>
+                    </h1>
+                    <p class="text-xs text-emerald-200">Eksplorasi & Game Makhorijul dan Sifatul Huruf Al-Qur'an</p>
+                </div>
+            </div>
+
+            <!-- Profile & XP Counter -->
+            <div class="flex items-center gap-3 bg-emerald-950/70 backdrop-blur-md px-4 py-2 rounded-2xl border border-emerald-700/60">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-user-graduate text-gold-400"></i>
+                    <input type="text" id="santri-name-input" value="Santri Tahsin" title="Nama Santri" placeholder="Nama Santri..." 
+                           class="bg-transparent text-sm font-bold text-gold-300 outline-none border-b border-emerald-600 focus:border-gold-400 w-28 md:w-36"
+                           onchange="updateSantriName(this.value)">
+                </div>
+                <div class="flex items-center gap-1.5 bg-emerald-800 px-3 py-1 rounded-xl border border-gold-500/30">
+                    <i class="fa-solid fa-star text-gold-400 animate-pulse"></i>
+                    <span id="player-xp" class="text-xs font-extrabold text-gold-300">0 XP</span>
+                </div>
+                <!-- Waveform Audio Active Indicator -->
+                <div id="audio-waveform" class="hidden items-center gap-1 h-6 px-1">
+                    <span class="w-1 bg-gold-400 rounded-full wave-anim" style="animation-delay: 0.1s;"></span>
+                    <span class="w-1 bg-gold-400 rounded-full wave-anim" style="animation-delay: 0.3s;"></span>
+                    <span class="w-1 bg-gold-400 rounded-full wave-anim" style="animation-delay: 0.2s;"></span>
+                </div>
+            </div>
+
+            <!-- PID Toolbar Controls -->
+            <div class="flex items-center gap-2">
+                <!-- Toggle PID Touch Mode -->
+                <button id="btn-pid-mode" onclick="togglePIDMode()" class="px-3.5 py-2 rounded-xl bg-emerald-800/80 hover:bg-emerald-700 text-gold-300 border border-emerald-600 text-xs font-bold flex items-center gap-2 transition" title="Perbesar Skala Sentuh PID">
+                    <i class="fa-solid fa-hand-pointer text-base"></i>
+                    <span class="hidden sm:inline">Mode PID Sentuh</span>
+                </button>
+                <!-- Toggle Annotation Coretan PID -->
+                <button id="btn-annotation-board" onclick="toggleAnnotationBoard()" class="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-emerald-950 font-extrabold text-xs flex items-center gap-2 shadow-md transition" title="Papan Coret PID Layar Sentuh">
+                    <i class="fa-solid fa-pen-nib"></i>
+                    <span class="hidden md:inline">Coret Layar</span>
+                </button>
+                <!-- Audio Toggle -->
+                <button id="btn-audio-toggle" onclick="toggleAudioSynth()" class="p-2.5 rounded-xl bg-emerald-800/80 hover:bg-emerald-700 text-gold-300 border border-emerald-600 transition" title="Efek Suara ON/OFF">
+                    <i class="fa-solid fa-volume-high text-lg" id="audio-icon"></i>
+                </button>
+                <!-- Fullscreen Toggle -->
+                <button onclick="toggleFullscreen()" class="p-2.5 rounded-xl bg-gold-600 hover:bg-gold-500 text-emerald-950 font-bold shadow-md transition" title="Layar Penuh PID">
+                    <i class="fa-solid fa-expand text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- NAVIGATION 5 TAB UTAMA (BESAR & RAMAH SENTUH PID) -->
+    <nav class="bg-emerald-900 border-b border-emerald-800 sticky top-[72px] z-20 shadow-md">
+        <div class="max-w-7xl mx-auto px-2 flex items-center justify-between overflow-x-auto no-scrollbar py-2 gap-2">
+            <button onclick="switchTab('tab1')" id="nav-tab1" class="btn-pid nav-tab-btn flex-1 min-w-[140px] px-4 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition bg-emerald-950 text-gold-400 border border-gold-500 shadow-md">
+                <i class="fa-solid fa-diagram-project text-base"></i>
+                <span>1. Peta Anatomi</span>
+            </button>
+            <button onclick="switchTab('tab2')" id="nav-tab2" class="btn-pid nav-tab-btn flex-1 min-w-[140px] px-4 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition text-emerald-200 hover:bg-emerald-800 hover:text-white">
+                <i class="fa-solid fa-microscope text-base"></i>
+                <span>2. Lab 29 Huruf</span>
+            </button>
+            <button onclick="switchTab('tab3')" id="nav-tab3" class="btn-pid nav-tab-btn flex-1 min-w-[140px] px-4 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition text-emerald-200 hover:bg-emerald-800 hover:text-white">
+                <i class="fa-solid fa-bullseye text-base"></i>
+                <span>3. Tebak Makhraj</span>
+            </button>
+            <button onclick="switchTab('tab4')" id="nav-tab4" class="btn-pid nav-tab-btn flex-1 min-w-[140px] px-4 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition text-emerald-200 hover:bg-emerald-800 hover:text-white">
+                <i class="fa-solid fa-masks-theater text-base"></i>
+                <span>4. Detektif & Sortir</span>
+            </button>
+            <button onclick="switchTab('tab5')" id="nav-tab5" class="btn-pid nav-tab-btn flex-1 min-w-[140px] px-4 py-3 rounded-2xl font-bold text-xs md:text-sm flex items-center justify-center gap-2 transition text-emerald-200 hover:bg-emerald-800 hover:text-white">
+                <i class="fa-solid fa-award text-base"></i>
+                <span>5. Ujian & Sertifikat</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
+
+        <!-- =================================================================== -->
+        <!-- TAB 1: PETA ANATOMI MAKHRAJ INTERAKTIF (SVG organ ucap)            -->
+        <!-- =================================================================== -->
+        <section id="content-tab1" class="space-y-6">
+            <div class="bg-gradient-to-r from-emerald-900 to-emerald-950 p-6 rounded-3xl text-white border-2 border-gold-500/40 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest bg-gold-500/20 text-gold-400 border border-gold-500/30">
+                        Eksplorasi Anatomi Wicara
+                    </span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-cream-50 mt-1">Diagram 5 Wilayah Utama Makhorijul Huruf</h2>
+                    <p class="text-xs sm:text-sm text-emerald-200 mt-1">Sentuh zona wilayah warna pada organ ucap manusia di bawah untuk membedah titik artikulasi & daftar hurufnya.</p>
+                </div>
+                <div class="flex items-center gap-2 bg-emerald-800/80 px-4 py-2.5 rounded-2xl border border-emerald-600 text-xs font-bold text-gold-300">
+                    <i class="fa-solid fa-hand-pointer text-base animate-bounce"></i>
+                    <span>Sentuh Organ pada Gambar!</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                <!-- SVG Anatomy Diagram Column -->
+                <div class="lg:col-span-6 bg-white p-6 rounded-3xl shadow-xl border border-emerald-100 flex flex-col items-center justify-center relative">
+                    <h3 class="text-base font-bold text-emerald-950 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-head-side-virus text-emerald-700"></i> Penampang Anatomi Wicara (Organ Ucap)
+                    </h3>
+                    
+                    <div class="w-full max-w-[380px] h-auto my-2">
+                        <svg viewBox="0 0 400 400" class="w-full h-auto drop-shadow-md">
+                            <defs>
+                                <radialGradient id="grad-head-bg" cx="50%" cy="50%" r="50%">
+                                    <stop offset="0%" stop-color="#f8fafc" />
+                                    <stop offset="100%" stop-color="#e2e8f0" />
+                                </radialGradient>
+                            </defs>
+                            
+                            <!-- Head Outline Background -->
+                            <path d="M 80,200 C 80,90 160,50 250,50 C 330,50 350,110 350,180 C 350,220 340,240 310,250 C 290,255 270,260 270,300 L 270,360 L 170,360 L 170,310 C 140,290 80,270 80,200 Z" 
+                                  fill="url(#grad-head-bg)" stroke="#94a3b8" stroke-width="3" stroke-dasharray="4 4" />
+
+                            <!-- 1. Al-Khaisyum (Rongga Hidung) - Pink -->
+                            <path id="svg-region-khaisyum" onclick="selectMakhrajZone('Al-Khaisyum')" class="anatomi-region fill-pink-500 stroke-pink-700" 
+                                  d="M 210,100 Q 280,100 290,135 Q 240,145 200,125 Z">
+                                <title>Al-Khaisyum (Rongga Hidung)</title>
+                            </path>
+
+                            <!-- 2. Al-Jauf (Rongga Mulut & Tenggorokan) - Gold -->
+                            <path id="svg-region-jauf" onclick="selectMakhrajZone('Al-Jauf')" class="anatomi-region fill-amber-400 stroke-amber-600" 
+                                  d="M 190,140 C 240,140 280,150 280,180 C 240,190 200,180 180,230 Q 170,160 190,140 Z">
+                                <title>Al-Jauf (Rongga Mulut & Tenggorokan)</title>
+                            </path>
+
+                            <!-- 3. Al-Lisan (Lidah) - Emerald -->
+                            <path id="svg-region-lisan" onclick="selectMakhrajZone('Al-Lisan')" class="anatomi-region fill-emerald-500 stroke-emerald-700 active" 
+                                  d="M 190,230 Q 230,200 285,215 Q 260,245 200,245 Z">
+                                <title>Al-Lisan (Lidah)</title>
+                            </path>
+
+                            <!-- 4. Asy-Syafatain (Dua Bibir) - Red/Rose -->
+                            <path id="svg-region-syafatain" onclick="selectMakhrajZone('Asy-Syafatain')" class="anatomi-region fill-rose-500 stroke-rose-700" 
+                                  d="M 290,195 Q 315,200 310,215 Q 290,225 285,210 Z">
+                                <title>Asy-Syafatain (Dua Bibir)</title>
+                            </path>
+
+                            <!-- 5. Al-Halq (Tenggorokan) - Sky Blue -->
+                            <path id="svg-region-halq" onclick="selectMakhrajZone('Al-Halq')" class="anatomi-region fill-sky-500 stroke-sky-700" 
+                                  d="M 170,245 C 190,245 195,290 195,340 C 175,340 170,290 170,245 Z">
+                                <title>Al-Halq (Tenggorokan)</title>
+                            </path>
+
+                            <!-- Anatomical Labels -->
+                            <text x="215" y="118" font-size="11" font-weight="bold" fill="#be185d" pointer-events="none">Al-Khaisyum</text>
+                            <text x="200" y="165" font-size="11" font-weight="bold" fill="#b45309" pointer-events="none">Al-Jauf</text>
+                            <text x="220" y="232" font-size="11" font-weight="bold" fill="#047857" pointer-events="none">Al-Lisan</text>
+                            <text x="315" y="210" font-size="11" font-weight="bold" fill="#be123c" pointer-events="none">Syafatain</text>
+                            <text x="120" y="295" font-size="11" font-weight="bold" fill="#0369a1" pointer-events="none">Al-Halq</text>
+                        </svg>
+                    </div>
+
+                    <!-- 5 Buttons Zone Quick Select -->
+                    <div class="flex flex-wrap gap-2 justify-center mt-3">
+                        <button onclick="selectMakhrajZone('Al-Jauf')" class="btn-pid text-xs px-3 py-2 rounded-xl bg-amber-100 text-amber-900 border border-amber-300 font-bold">1. Al-Jauf</button>
+                        <button onclick="selectMakhrajZone('Al-Halq')" class="btn-pid text-xs px-3 py-2 rounded-xl bg-sky-100 text-sky-900 border border-sky-300 font-bold">2. Al-Halq</button>
+                        <button onclick="selectMakhrajZone('Al-Lisan')" class="btn-pid text-xs px-3 py-2 rounded-xl bg-emerald-100 text-emerald-900 border border-emerald-300 font-bold">3. Al-Lisan</button>
+                        <button onclick="selectMakhrajZone('Asy-Syafatain')" class="btn-pid text-xs px-3 py-2 rounded-xl bg-rose-100 text-rose-900 border border-rose-300 font-bold">4. Asy-Syafatain</button>
+                        <button onclick="selectMakhrajZone('Al-Khaisyum')" class="btn-pid text-xs px-3 py-2 rounded-xl bg-pink-100 text-pink-900 border border-pink-300 font-bold">5. Al-Khaisyum</button>
+                    </div>
+                </div>
+
+                <!-- Zone Breakdown Detail Column -->
+                <div class="lg:col-span-6 bg-white p-6 rounded-3xl shadow-xl border border-emerald-100 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-3">
+                            <span id="zone-badge-num" class="w-10 h-10 rounded-2xl bg-emerald-900 text-gold-400 font-extrabold flex items-center justify-center text-lg">3</span>
+                            <div>
+                                <h3 id="zone-title-name" class="text-xl font-extrabold text-emerald-950">Al-Lisan (الْلِّسَانُ)</h3>
+                                <p id="zone-subtitle-desc" class="text-xs text-slate-500">Makhraj Lidah — Memiliki 10 titik artikulasi rinci untuk 18 huruf.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Zone Explanation Box -->
+                    <div class="bg-cream-100 p-4 rounded-2xl border border-cream-200 text-xs sm:text-sm text-slate-700 space-y-2">
+                        <h4 class="font-bold text-emerald-900 uppercase tracking-wider text-xs">Penjelasan Artikulasi Tajwid:</h4>
+                        <p id="zone-detail-text" class="leading-relaxed">
+                            Al-Lisan merupakan makhraj terbesar dan paling banyak menghasilkan huruf hijaiyah. Terbagi menjadi pangkal lidah, tengah lidah, tepi lidah, dan ujung lidah.
+                        </p>
+                    </div>
+
+                    <!-- Included Letters Interactive Buttons Grid -->
+                    <div>
+                        <h4 class="text-xs font-bold text-emerald-900 uppercase tracking-wider mb-2">Daftar Huruf di Wilayah Ini (Klik Suara):</h4>
+                        <div id="zone-letters-grid" class="flex flex-wrap gap-2.5">
+                            <!-- Letters injected dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- =================================================================== -->
+        <!-- TAB 2: LABORATORIUM 29 HURUF HIJAIYAH (BEDAH TAJWID)                -->
+        <!-- =================================================================== -->
+        <section id="content-tab2" class="hidden space-y-6">
+            <div class="bg-white p-5 rounded-3xl shadow-md border border-emerald-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-2xl font-extrabold text-emerald-950">Laboratorium Bedah 29 Huruf Hijaiyah</h2>
+                    <p class="text-xs text-slate-500">Klik salah satu kartu huruf di bawah untuk analisis tajwid lengkap (Makhraj, Sifat Berlawanan, Sifat Tunggal, & Harakat).</p>
+                </div>
+                <!-- Search & Filter -->
+                <div class="relative w-full sm:w-64">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                    <input type="text" id="lab-search-input" onkeyup="filterLabHuruf(this.value)" placeholder="Cari Huruf / Sifat (misal: Ba, Qalqalah)..." 
+                           class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-300 rounded-2xl focus:outline-none focus:border-emerald-600 font-semibold">
+                </div>
+            </div>
+
+            <!-- 29 Huruf Grid -->
+            <div id="lab-huruf-grid" class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-7 lg:grid-cols-8 gap-3 grid-pid-letters">
+                <!-- Hijaiyah cards injected dynamically -->
+            </div>
+        </section>
+
+        <!-- MODAL BEDAH HURUF TAJWID (TAB 2) -->
+        <div id="modal-huruf-detail" class="hidden fixed inset-0 z-50 bg-emerald-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-y-auto shadow-2xl border-4 border-gold-500 flex flex-col justify-between">
+                <!-- Modal Header -->
+                <div class="bg-gradient-to-r from-emerald-950 to-emerald-900 text-white p-6 rounded-t-2xl flex items-center justify-between sticky top-0 z-10 border-b border-gold-500/30">
+                    <div class="flex items-center gap-4">
+                        <div id="modal-huruf-symbol-box" class="w-20 h-20 rounded-2xl bg-gradient-to-br from-gold-400 to-gold-600 text-emerald-950 flex items-center justify-center font-arabic text-5xl font-bold shadow-xl">
+                            ب
+                        </div>
+                        <div>
+                            <h3 id="modal-huruf-name" class="text-3xl font-extrabold text-white">Ba (بَاءٌ)</h3>
+                            <p id="modal-huruf-makhraj-summary" class="text-xs text-gold-300 font-semibold">Makhraj Utama: Asy-Syafatain (Dua Bibir)</p>
+                        </div>
+                    </div>
+                    <button onclick="closeHurufModal()" class="w-12 h-12 rounded-2xl bg-emerald-850 hover:bg-emerald-700 text-emerald-200 flex items-center justify-center transition">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="p-6 space-y-6">
+                    <!-- Audio Harakat Practice Bar -->
+                    <div class="bg-cream-100 p-5 rounded-3xl border border-cream-200 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-extrabold text-emerald-950 uppercase tracking-wider">Uji Pelafalan 4 Harakat</span>
+                            <button onclick="playCurrentHurufSpeech()" class="btn-pid px-4 py-2 rounded-xl bg-gold-600 hover:bg-gold-500 text-emerald-950 text-xs font-bold flex items-center gap-2 shadow-md">
+                                <i class="fa-solid fa-volume-high text-base"></i> Putar Suara Speech
+                            </button>
+                        </div>
+                        <div id="modal-harakat-grid" class="grid grid-cols-4 gap-3 text-center font-arabic text-3xl font-bold text-emerald-950">
+                            <!-- Harakat cards populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Makhraj Details -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-200">
+                            <h4 class="text-xs font-bold text-emerald-900 uppercase tracking-wider"><i class="fa-solid fa-location-dot"></i> Makhraj Utama:</h4>
+                            <p id="modal-makhraj-utama-txt" class="text-sm font-extrabold text-emerald-950 mt-1">Asy-Syafatain</p>
+                        </div>
+                        <div class="bg-emerald-50 p-4 rounded-2xl border border-emerald-200">
+                            <h4 class="text-xs font-bold text-emerald-900 uppercase tracking-wider"><i class="fa-solid fa-crosshairs"></i> Makhraj Rinci Artikulasi:</h4>
+                            <p id="modal-makhraj-rinci-txt" class="text-xs text-slate-700 mt-1 leading-relaxed">-</p>
+                        </div>
+                    </div>
+
+                    <!-- 5 Sifat Berlawanan (Al-Mutadhadah) Grid -->
+                    <div class="space-y-2">
+                        <h4 class="text-xs font-extrabold text-emerald-900 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-scale-balanced text-emerald-700"></i> 5 Pasangan Sifat Berlawanan (Al-Mutadhadah):
+                        </h4>
+                        <div id="modal-sifat-opposite-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Sifat Tunggal (Ghairu Mutadhadah) Badges -->
+                    <div class="space-y-2">
+                        <h4 class="text-xs font-extrabold text-emerald-900 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-star text-gold-600"></i> Sifat Khusus Tunggal (Ghairu Mutadhadah):
+                        </h4>
+                        <div id="modal-sifat-tunggal-badges" class="flex flex-wrap gap-2">
+                            <!-- Injected via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Lahn Khafi Warning & Practical Tips -->
+                    <div class="bg-amber-50 p-4 rounded-2xl border border-amber-200 space-y-1">
+                        <h4 class="text-xs font-extrabold text-amber-900 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Peringatan Lahn (Kesalahan Umum) & Tips:
+                        </h4>
+                        <p id="modal-lahn-tips-txt" class="text-xs text-amber-950 leading-relaxed font-medium">
+                            -
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="bg-cream-100 p-4 rounded-b-2xl flex justify-end border-t border-cream-200">
+                    <button onclick="closeHurufModal()" class="btn-pid px-6 py-2.5 rounded-xl bg-emerald-900 hover:bg-emerald-800 text-white font-bold text-sm">
+                        Tutup Bedah Huruf
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- =================================================================== -->
+        <!-- TAB 3: GAME 1 TEBAK MAKHRAJ (3 LEVEL & SPEED ROUND 60s)           -->
+        <!-- =================================================================== -->
+        <section id="content-tab3" class="hidden space-y-6">
+            <!-- Level Selector Bar -->
+            <div class="bg-white p-4 rounded-3xl shadow-md border border-emerald-100 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-gamepad text-amber-500 text-2xl"></i>
+                    <span class="font-extrabold text-emerald-950">Pilih Mode Level Game:</span>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button id="g1-lvl-1" onclick="startMakhrajGame(1)" class="btn-pid px-4 py-2.5 rounded-xl bg-emerald-900 text-gold-400 font-extrabold text-xs shadow-md">Level 1: Makhraj Utama</button>
+                    <button id="g1-lvl-2" onclick="startMakhrajGame(2)" class="btn-pid px-4 py-2.5 rounded-xl bg-cream-200 text-slate-800 hover:bg-emerald-100 font-extrabold text-xs">Level 2: Makhraj Rinci</button>
+                    <button id="g1-lvl-3" onclick="startMakhrajGame(3)" class="btn-pid px-4 py-2.5 rounded-xl bg-cream-200 text-slate-800 hover:bg-emerald-100 font-extrabold text-xs">Level 3: Speed Round (60s)</button>
+                </div>
+            </div>
+
+            <!-- Game Arena Card -->
+            <div class="bg-white p-6 sm:p-8 rounded-3xl shadow-xl border-2 border-emerald-100 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative overflow-hidden">
+                
+                <!-- Speed Round Timer Bar (Shown in Level 3) -->
+                <div id="g1-timer-bar" class="hidden absolute top-0 left-0 right-0 bg-gradient-to-r from-amber-500 to-gold-500 text-emerald-950 text-center text-xs font-extrabold py-1.5 flex items-center justify-center gap-2 shadow-md">
+                    <i class="fa-solid fa-stopwatch animate-spin text-base"></i> Tantangan Speed Round: Sisa Waktu <span id="g1-timer-num" class="text-base font-black underline">60</span> detik
+                </div>
+
+                <!-- Left Column: Question & Giant Letter -->
+                <div class="lg:col-span-6 space-y-6 text-center lg:text-left">
+                    <div>
+                        <span id="g1-level-badge" class="px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-amber-100 text-amber-900 border border-amber-300 uppercase tracking-wider">
+                            Level 1: 5 Makhraj Utama
+                        </span>
+                        <h3 class="text-slate-600 text-sm mt-3 font-bold">Di manakah letak Makhraj pengucapan huruf di bawah ini?</h3>
+                    </div>
+
+                    <!-- Target Giant Arabic Letter Display -->
+                    <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-5">
+                        <div id="g1-letter-symbol" class="w-32 h-32 rounded-3xl bg-gradient-to-br from-emerald-900 via-emerald-950 to-emerald-900 text-gold-400 font-arabic text-6xl font-extrabold flex items-center justify-center shadow-2xl border-4 border-gold-500">
+                            ق
+                        </div>
+                        <div class="text-center sm:text-left space-y-1">
+                            <h4 id="g1-letter-name" class="text-3xl font-extrabold text-emerald-950">Qaf</h4>
+                            <p id="g1-letter-hint" class="text-xs text-slate-500 italic">Petunjuk: Memiliki sifat Qalqalah</p>
+                            <button onclick="speakG1CurrentLetter()" class="btn-pid mt-2 text-xs font-bold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-3.5 py-2 rounded-xl border border-emerald-300 inline-flex items-center gap-2">
+                                <i class="fa-solid fa-volume-high"></i> Bunyi Huruf
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Options Grid (Big Buttons for PID) -->
+                    <div id="g1-options-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                        <!-- Choice buttons populated via JS -->
+                    </div>
+                </div>
+
+                <!-- Right Column: Visual Anatomy Feedback -->
+                <div class="lg:col-span-6 bg-cream-50 p-6 rounded-3xl border border-cream-200 flex flex-col items-center justify-center text-center space-y-4">
+                    <h4 class="text-xs font-extrabold text-emerald-900 uppercase tracking-widest">Visualisasi Respon Anatomi</h4>
+                    
+                    <div class="w-full max-w-[250px] h-auto">
+                        <svg viewBox="0 0 400 400" class="w-full h-auto">
+                            <path d="M 80,200 C 80,90 160,50 250,50 C 330,50 350,110 350,180 C 350,220 340,240 310,250 C 290,255 270,260 270,300 L 270,360 L 170,360 L 170,310 C 140,290 80,270 80,200 Z" 
+                                  fill="#f1f5f9" stroke="#cbd5e1" stroke-width="3" />
+                            <path id="g1-fb-jauf" class="fill-amber-400 opacity-20 transition-all duration-500" d="M 190,140 C 240,140 280,150 280,180 C 240,190 200,180 180,230 Q 170,160 190,140 Z"/>
+                            <path id="g1-fb-halq" class="fill-sky-500 opacity-20 transition-all duration-500" d="M 170,245 C 190,245 195,290 195,340 C 175,340 170,290 170,245 Z"/>
+                            <path id="g1-fb-lisan" class="fill-emerald-500 opacity-20 transition-all duration-500" d="M 190,230 Q 230,200 285,215 Q 260,245 200,245 Z"/>
+                            <path id="g1-fb-syafatain" class="fill-rose-500 opacity-20 transition-all duration-500" d="M 290,195 Q 315,200 310,215 Q 290,225 285,210 Z"/>
+                            <path id="g1-fb-khaisyum" class="fill-pink-500 opacity-20 transition-all duration-500" d="M 210,100 Q 280,100 290,135 Q 240,145 200,125 Z"/>
+                        </svg>
+                    </div>
+
+                    <div id="g1-feedback-msg" class="text-xs p-3.5 rounded-2xl bg-white border border-slate-200 w-full text-slate-600 font-bold min-h-[56px] flex items-center justify-center">
+                        Sentuh salah satu pilihan jawaban di sebelah kiri.
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- =================================================================== -->
+        <!-- TAB 4: GAME 2 DETEKTIF & SORTIR SIFAT HURUF (2 MODE PID)           -->
+        <!-- =================================================================== -->
+        <section id="content-tab4" class="hidden space-y-6">
+            <!-- Mode Selector Header -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button onclick="switchG2Submode('detektif')" id="g2-btn-detektif" class="btn-pid p-4 rounded-3xl bg-emerald-900 text-gold-400 font-extrabold text-sm shadow-md flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-magnifying-glass text-lg"></i> Mode A: Detektif Sifat Huruf
+                </button>
+                <button onclick="switchG2Submode('sortir')" id="g2-btn-sortir" class="btn-pid p-4 rounded-3xl bg-white text-emerald-950 hover:bg-emerald-50 font-extrabold text-sm border border-emerald-200 shadow-sm flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-right-left text-lg"></i> Mode B: Sortir Kilat 2 Kubu (PID Dual)
+                </button>
+            </div>
+
+            <!-- MODE A: DETEKTIF SIFAT -->
+            <div id="g2-submode-detektif" class="bg-white p-6 sm:p-8 rounded-3xl shadow-xl border-2 border-emerald-100 space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-4">
+                    <div>
+                        <span class="text-xs font-extrabold px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 uppercase">Detektif Tajwid</span>
+                        <h3 class="text-xl font-extrabold text-emerald-950 mt-1">Huruf manakah yang memiliki kombinasi sifat berikut?</h3>
+                    </div>
+                    <div class="bg-cream-100 px-4 py-2 rounded-2xl border border-cream-200 text-right">
+                        <span class="text-[10px] text-slate-500 font-bold block">Skor Detektif</span>
+                        <span id="g2-detektif-score" class="text-lg font-black text-gold-600">0 XP</span>
+                    </div>
+                </div>
+
+                <!-- Clues Card -->
+                <div class="bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-950 text-white p-6 rounded-3xl border-2 border-gold-500 space-y-3 shadow-lg">
+                    <div class="flex items-center gap-2 text-gold-400 font-bold text-xs">
+                        <i class="fa-solid fa-file-invoice"></i> BERKAS PETUNJUK SIFAT HURUF:
+                    </div>
+                    <div id="g2-clues-list" class="flex flex-wrap gap-2 pt-1">
+                        <!-- Clues badges injected via JS -->
+                    </div>
+                </div>
+
+                <!-- 4 Choices Letter Grid -->
+                <div id="g2-detektif-choices" class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <!-- Buttons injected via JS -->
+                </div>
+            </div>
+
+            <!-- MODE B: SORTIR KILAT 2 KUBU -->
+            <div id="g2-submode-sortir" class="hidden bg-white p-6 sm:p-8 rounded-3xl shadow-xl border-2 border-emerald-100 space-y-6">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                    <div>
+                        <span class="text-xs font-extrabold px-3 py-1 rounded-full bg-amber-100 text-amber-900">Mode Tanding 2 Kubu Layar PID</span>
+                        <h3 class="text-xl font-extrabold text-emerald-950 mt-1">Sortir Huruf Ke Kubu Yang Tepat!</h3>
+                    </div>
+                    <!-- Opposing Sifat Pair Selector -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-bold text-slate-600">Pasangan Sifat:</span>
+                        <select id="sortir-pair-select" onchange="changeSortirPair(this.value)" class="text-xs bg-slate-100 font-bold text-emerald-900 p-2 rounded-xl border border-slate-300">
+                            <option value="hams_jahr">Hams vs Jahar</option>
+                            <option value="istila_istifal">Isti'la vs Istifal</option>
+                            <option value="qalqalah">Qalqalah vs Bukan Qalqalah</option>
+                            <option value="syiddah_rakhawah">Syiddah vs Rakhawah</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Giant Center Letter Card -->
+                <div class="flex flex-col items-center justify-center py-2">
+                    <span class="text-xs font-bold text-slate-400 mb-2">Huruf Yang Harus Disortir:</span>
+                    <div id="sortir-current-symbol" class="w-36 h-36 rounded-3xl bg-gradient-to-br from-gold-400 to-gold-600 text-emerald-950 font-arabic text-7xl font-bold flex items-center justify-center shadow-2xl border-4 border-gold-300">
+                        ت
+                    </div>
+                </div>
+
+                <!-- 2 Large Side Buttons for PID Tanding -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
+                    <button onclick="checkSortirAnswer(1)" id="sortir-btn-left" class="btn-pid p-6 rounded-3xl bg-emerald-950 hover:bg-emerald-900 text-white text-center border-4 border-emerald-700 transition space-y-2 shadow-xl">
+                        <h4 id="sortir-title-left" class="text-2xl font-black text-gold-400">HAMS (هَمْس)</h4>
+                        <p id="sortir-desc-left" class="text-xs text-emerald-200">Ada hembusan nafas saat diucapkan</p>
+                    </button>
+
+                    <button onclick="checkSortirAnswer(2)" id="sortir-btn-right" class="btn-pid p-6 rounded-3xl bg-emerald-900 hover:bg-emerald-850 text-white text-center border-4 border-emerald-700 transition space-y-2 shadow-xl">
+                        <h4 id="sortir-title-right" class="text-2xl font-black text-gold-400">JAHAR (جَهْر)</h4>
+                        <p id="sortir-desc-right" class="text-xs text-emerald-200">Nafas tertahan kuat saat diucapkan</p>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- =================================================================== -->
+        <!-- TAB 5: UJIAN EVALUASI 10 SOAL & SERTIFIKAT DIGITAL                -->
+        <!-- =================================================================== -->
+        <section id="content-tab5" class="hidden space-y-6">
+            <!-- Quiz Card -->
+            <div id="quiz-main-box" class="bg-white p-6 sm:p-8 rounded-3xl shadow-xl border-2 border-gold-300 space-y-6">
+                <!-- Quiz Header Progress -->
+                <div class="flex items-center justify-between text-xs font-bold text-slate-500 border-b border-slate-100 pb-4">
+                    <span>Soal <span id="quiz-current-num">1</span> dari 10</span>
+                    <div class="w-1/3 bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200">
+                        <div id="quiz-progress-bar" class="bg-gold-500 h-full w-10 transition-all duration-300"></div>
+                    </div>
+                    <span id="quiz-score-badge" class="text-gold-700 font-extrabold text-sm">Skor: 0</span>
+                </div>
+
+                <!-- Question Text -->
+                <div class="space-y-3">
+                    <span id="quiz-cat-tag" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-900 border border-emerald-300">
+                        Makhorijul Huruf
+                    </span>
+                    <h3 id="quiz-question-txt" class="text-xl sm:text-2xl font-extrabold text-emerald-950 leading-relaxed">
+                        Manakah huruf di bawah ini yang keluar dari makhraj Al-Halq (Tenggorokan)?
+                    </h3>
+                </div>
+
+                <!-- 4 Choices Buttons -->
+                <div id="quiz-options-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+
+            <!-- RESULT SUMMARY & CERTIFICATE CONTAINER (Hidden by default) -->
+            <div id="certificate-wrapper" class="hidden space-y-8">
+                <!-- Quiz Result Summary Bar -->
+                <div class="bg-white p-6 rounded-3xl shadow-xl border-2 border-emerald-100 text-center space-y-4 no-print">
+                    <div class="w-20 h-20 rounded-full bg-gold-100 text-gold-600 font-extrabold text-3xl flex items-center justify-center mx-auto shadow-inner">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <h3 class="text-2xl font-extrabold text-emerald-950">Hasil Ujian Evaluasi Tahsin Al-Qur'an</h3>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-xl mx-auto py-2">
+                        <div class="bg-cream-100 p-4 rounded-2xl border border-cream-200">
+                            <span class="text-xs text-slate-500 font-bold block">Skor Akhir</span>
+                            <p id="res-score-val" class="text-3xl font-black text-emerald-900">90 / 100</p>
+                        </div>
+                        <div class="bg-cream-100 p-4 rounded-2xl border border-cream-200">
+                            <span class="text-xs text-slate-500 font-bold block">Predikat</span>
+                            <p id="res-predicate-val" class="text-2xl font-black text-gold-600">Mumtaz (ممتاز)</p>
+                        </div>
+                        <div class="bg-cream-100 p-4 rounded-2xl border border-cream-200">
+                            <span class="text-xs text-slate-500 font-bold block">Status</span>
+                            <p class="text-2xl font-black text-emerald-600">LULUS</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center gap-4 pt-2">
+                        <button onclick="printDigitalCertificate()" class="btn-pid px-6 py-3 rounded-2xl bg-gold-600 hover:bg-gold-500 text-emerald-950 font-bold text-sm shadow-lg flex items-center gap-2">
+                            <i class="fa-solid fa-print text-lg"></i> Cetak / Simpan Sertifikat
+                        </button>
+                        <button onclick="restartQuizEngine()" class="btn-pid px-6 py-3 rounded-2xl bg-emerald-900 hover:bg-emerald-800 text-white font-bold text-sm shadow-lg flex items-center gap-2">
+                            <i class="fa-solid fa-rotate-right text-lg"></i> Ulangi Kuis
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PRINTABLE DIGITAL CERTIFICATE TEMPLATE -->
+                <div id="printable-certificate" class="bg-white p-8 sm:p-12 rounded-3xl border-8 border-double border-emerald-900 shadow-2xl relative overflow-hidden text-center space-y-6">
+                    <!-- Corner Islamic Ornaments -->
+                    <div class="absolute top-4 left-4 text-gold-600 opacity-60 text-3xl"><i class="fa-solid fa-vector-square"></i></div>
+                    <div class="absolute top-4 right-4 text-gold-600 opacity-60 text-3xl"><i class="fa-solid fa-vector-square"></i></div>
+                    <div class="absolute bottom-4 left-4 text-gold-600 opacity-60 text-3xl"><i class="fa-solid fa-vector-square"></i></div>
+                    <div class="absolute bottom-4 right-4 text-gold-600 opacity-60 text-3xl"><i class="fa-solid fa-vector-square"></i></div>
+
+                    <!-- Certificate Header -->
+                    <div class="space-y-2">
+                        <div class="font-arabic text-3xl text-emerald-950 font-bold">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+                        <h2 class="text-3xl sm:text-4xl font-black text-emerald-950 tracking-wider uppercase">Sertifikat Kelulusan Tahsin</h2>
+                        <p class="text-xs text-gold-700 font-bold tracking-widest uppercase">TahsinQuest — Media Pembelajaran Digital Tajwid & Tahsin</p>
+                    </div>
+
+                    <!-- Certificate Body -->
+                    <div class="space-y-4 py-4 max-w-2xl mx-auto">
+                        <p class="text-sm text-slate-600">Sertifikat ini diberikan secara resmi kepada Santri / Peserta:</p>
+                        <h3 id="cert-student-fullname" class="text-3xl sm:text-4xl font-black text-emerald-900 underline decoration-gold-500 underline-offset-8">
+                            Santri Tahsin
+                        </h3>
+                        <p class="text-sm text-slate-600 leading-relaxed pt-2">
+                            Telah berhasil menuntaskan Ujian Evaluasi Pembelajaran Digital Tajwid Al-Qur'an pada materi <span class="font-bold text-emerald-950">Makhorijul Huruf & Sifatul Huruf</span> dengan hasil pengujian sebagai berikut:
+                        </p>
+                    </div>
+
+                    <!-- Certificate Badges -->
+                    <div class="inline-flex items-center gap-8 bg-cream-100 px-8 py-4 rounded-2xl border border-gold-300">
+                        <div>
+                            <span class="text-xs text-slate-500 uppercase tracking-wider block font-bold">Nilai Akhir</span>
+                            <span id="cert-final-score-badge" class="text-3xl font-black text-emerald-950">90 / 100</span>
+                        </div>
+                        <div class="h-10 w-px bg-gold-300"></div>
+                        <div>
+                            <span class="text-xs text-slate-500 uppercase tracking-wider block font-bold">Predikat</span>
+                            <span id="cert-final-pred-badge" class="text-2xl font-black text-gold-700">Mumtaz (ممتاز)</span>
+                        </div>
+                    </div>
+
+                    <!-- Signature Footer -->
+                    <div class="pt-8 flex justify-between items-end max-w-xl mx-auto text-xs text-slate-600">
+                        <div class="text-center space-y-1">
+                            <p id="cert-date-text">Tanggal: 21 November 2026</p>
+                            <div class="w-28 h-16 border-b border-slate-400 mx-auto flex items-center justify-center">
+                                <span class="font-arabic text-emerald-900 text-2xl font-bold">TahsinQuest</span>
+                            </div>
+                            <p class="font-bold text-emerald-950">System Verifier TahsinQuest</p>
+                        </div>
+                        <div class="w-24 h-24 rounded-full border-4 border-gold-500 flex flex-col items-center justify-center text-gold-600 font-bold text-[10px] uppercase shadow-inner bg-gold-50/50">
+                            <i class="fa-solid fa-stamp text-xl mb-1"></i>
+                            <span>Official</span>
+                            <span>Verified</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-emerald-950 text-emerald-300 text-xs py-4 border-t border-emerald-900 no-print">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p>© 2026 TahsinQuest — Media Pembelajaran Interaktif Makhorijul & Sifatul Huruf Al-Qur'an.</p>
+            <div class="flex items-center gap-4">
+                <span>Metode Matan Al-Jazariyyah</span>
+                <span>•</span>
+                <span>PID & Smartboard Ready</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC ENGINE -->
+    <script>
+        /* ==========================================================================
+           1. DATASET COMPREHENSIVE 29 HURUF HIJAIYAH (LENGKAP BESERTA MAKHRAJ & SIFAT)
+           ========================================================================== */
+        const hijaiyahData = [
+            {
+                symbol: 'ا', name: 'Alif', transliterasi: 'Alif',
+                harakat: { fathah: 'أَ', kasrah: 'إِ', dhammah: 'أُ', sukun: 'أْ' },
+                makhrajUtama: 'Al-Jauf',
+                makhrajRinci: 'Rongga udara terbuka antara mulut dan tenggorokan (Huruf Madd).',
+                sifatOpposite: { hamsJahr: 'Jahar', syiddahRakhawah: 'Rakhawah', istilaIstifal: 'Istifal', ithbaqInfitah: 'Infitah', idzlaqIshmat: 'Ishmat' },
+                sifatTunggal: [],
+                lahnTips: 'Hati-hati menggeser suara alif ke hidung (ghunnah). Biarkan suara mengalir murni di rongga mulut.'
+            },
+            {
+                symbol: 'ب', name: 'Ba', transliterasi: 'Ba',
+                harakat: { fathah: 'بَ', kasrah: 'بِ', dhammah: 'بُ', sukun: 'أَبْ' },
+                makhrajUtama: 'Asy-Syafatain',
+                makhrajRinci: 'Pertemuan dua bibir (atas & bawah) yang dirapatkan rapat.',
+                sifatOpposite: { hamsJahr: 'Jahar', syiddahRakhawah: 'Syiddah', istilaIstifal: 'Istifal', ithbaqInfitah: 'Infitah', idzlaqIshmat: 'Idzlaq' },
+                sifatTunggal: ['Qalqalah'],
+                lahnTips: 'Jangan membiarkan nafas berhembus (hams). Saat sukun wajib dipantulkan tajam (Qalqalah).'
+            },
+            {
+                symbol: 'ت', name: 'Ta', transliterasi: 'Ta',
+                harakat: { fathah: 'تَ', kasrah: 'تِ', dhammah: 'تُ', sukun: 'أَتْ' },
+                makhrajUtama: 'Al-Lisan',
+                makhrajRinci: 'Ujung lidah menempel pada pangkal gigi seri atas.',
+                sifatOpposite: { hamsJahr: 'Hams', syiddahRakhawah: 'Syiddah', istilaIstifal: 'Istifal', ithbaqInfitah: 'Infitah', idzlaqIshmat: 'Ishmat' },
+                sifatTunggal: [],
+                lahnTips: 'Saat sukun, lepaskan sisa bisikan hembusan nafas (hams) yang halus tanpa desis berlebihan seperti "S".'
+            },
+            {
+                symbol: 'ث', name: 'Tsa', transliterasi: 'Tsa',
+                harakat: { fathah: 'ثَ', kasrah: 'ثِ', dhammah: 'ثُ', sukun: 'أَثْ' },
+                makhrajUtama: 'Al-Lisan',
+                makhrajRinci: 'Ujung lidah dikeluarkan sedikit menyentuh ujung gigi seri atas.',
+                sifatOpposite: { hamsJahr: 'Hams', syiddahRakhawah: 'Rakhawah', istilaIstifal: 'Istifal', ithbaqInfitah: 'Infitah', idzlaqIshmat: 'Ishmat' },
+                sifatTunggal: [],
+                lahnTips: 'Sering tertukar dengan Sin (س). Pastikan ujung lidah menyembul keluar di antara dua gigi.'
+            },
+            {
+                symbol: 'ج', name: 'Jim', transliterasi: 'Jim',
+                harakat: { fathah: 'جَ', kasrah: 'جِ', dhammah: 'جُ', sukun: 'أَجْ' },
+                makhrajUtama: 'Al-Lisan',
+                makhrajRinci: 'Tengah lidah menempel rapat pada langit-langit keras di atasnya.',
+                sifatOpposite: { hamsJahr: 'Jahar', syiddahRakhawah: 'Syiddah', istilaIstifal: 'Istifal', ithbaqInfitah: 'Infitah', idzlaqIshmat: 'Ishmat' },
+                sifatTunggal: ['Qalqalah'],
+                lahnTips: 'Jangan dibaca berdesis seperti "Ch". Suara tertekan kuat lalu dipantulkan saat sukun.'
+            },
+            {
+                symbol: 'ح', name: 'Ha', transliterasi: 'Ha (Halqiy)',
+                harakat: { fathah: 'حَ', kasrah: 'حِ', dhammah: 'حُ', sukun: 'أَحْ' },
+                makhrajUtama: 'Al-Halq',
+                makhrajRinci: 'Tengah-tengah tenggorokan (Wasathul Halq).',
+                sifatOpposite: { hamsJahr: 'Hams', syiddahRakhawah: 'Rakhawah', istilaIstifal: 'Istifal', ithbaqInfitah: 'Infitah', idzlaqIshmat: 'Ishmat' },
+                sifatTunggal: [],
+                lahnTips: 'Suara bersih dan halus dari tengah tenggorokan, tidak boleh serak garang seperti Kha (خ).'
+            },
+            {
+                symbol: 'خ', name: 'Kha', transliterasi: 'Kha',
+                harakat: { fathah: 'خَ', kasrah: 'خِ', dhammah: 'خُ', sukun: 'أَخْ' },
+                makhrajUtama: 'Al-Halq',
+                makhrajRinci: 'Pangkal tenggorokan teratas dekat mulut (Adnal Halq).',
+                sifatOpposite: { hamsJahr: 'Hams', syiddahRakhawah: 'Rakhawah', istilaIstifal: 'Isti\'la', ithbaqInfitah: 'Infitah', idzlaqIshmat: 'Ishmat' },
+                sifatTunggal: [],
+                lahnTips: 'Memiliki sifat Isti\'la (tebal). Pastikan getaran gesekan serak terasa murni di tenggorokan atas.'
+            },
+            {
+                symbol: 'د', name: 'Dal', transliterasi: 'Dal',
+                harakat: { fathah: 'دَ', kasrah: 'دِ', dhammah: 'دُ', sukun: 'أَدْ' },
+                makhrajUtama: 'Al-Lisan',
+                makhrajRinci: 'Ujung lidah menempel pada pangkal gigi seri atas.',
+                sifatOpposite: { hamsJahr: 'Jahar', syiddahRakhawah: 'Syiddah', istilaIstifal: 'Istifal', ithbaqInfitah: 'Infitah', idzlaqIshmat: 'Ishmat' },
+                sifatTunggal: ['Qalqalah'],
+                lahnTips: 'Jaga nafas agar tidak bocor. Pantulkan secara jelas (Qalqalah) saat sukun.'
+            },
+            {
+                symbol: 'ذ', name: 'Dzal', transliterasi: 'Dzal',
+                harakat: { fathah: 'ذَ', kasrah: 'ذِ', dhammah: 'ذُ', sukun: 'أَذْ' },
+                makhrajUtama: 'Al-Lisan',
+                makhrajRinci: 'Ujung lidah dikeluarkan sedikit menyentuh ujung gigi seri atas.',
+                sifatOpposite: { hamsJahr: 'Jahar', syiddahRakhawah: 'Rakhawah', istilaIstifal: 'Istifal', ithbaqInfitah: 'Infitah', idzlaqIshmat: 'Ishmat' },
+                sifatTunggal: [],
+                lahnTips: 'Jangan dibaca bergetar seperti Zai (ز). Dzal tidak memiliki sifat Shafir.'
+            },
+            {
+                symbol: 'ر', name: 'Ra', transliterasi: 'Ra',
+                harakat: { fathah: 'رَ', kasrah: 'رِ', dhammah: 'رُ', sukun: 'أَرْ' },
+                makhrajUtama: 'Al-Lisan',
+                makhrajRinci: 'Ujung lidah dekat punggung lidah menempel gusi gigi seri atas.',
+                sifatOpposite: { hamsJahr: 'Jahar', syiddahRakhawah: 'Tawassuth', istilaIstifal: 'Istifal', ithbaqInfitah: 'Infitah', idzlaqIshmat: 'Idzlaq' },
+                sifatTunggal: ['Inhiraf', 'Takrir'],
+                lahnTips: 'Hindari getaran berlebihan (Takrir berlebih). Cukup getarkan ujung lidah 1-2 kali saja.'
+            },
+            {
+                symbol: 'ز', name: 'Zai', transliterasi: 'Zai',
+                harakat: { fathah: 'زَ', kasrah: 'زِ', dhammah: 'زُ', sukun: 'أَزْ' },
+                makhrajUtama: 'Al-Lisan',
+                makhrajRinci: 'Ujung lidah sejajar di atas gigi seri bawah.',
+                sifatOpposite: { hamsJahr: 'Jahar', syiddahRakhawah: 'Rakhawah', istilaIstifal: 'Istifal', ithbaqInfitah: 'Infitah', idzlaqIshmat: 'Ishmat' },
+                sifatTunggal: ['Shafir'],
+                lahnTips: 'Memiliki suara desis tajam mirip lebah (Shafir). Nafas tetap tertahan kuat (Jahar).'
+            },
+            {
+                symbol: 'س', name: 'Sin', transliterasi: 'Sin',
+                harakat: { fathah: 'سَ', kasrah: 'سِ', dhammah: 'سُ', sukun: 'أَسْ' },
+                makhrajUtama: 'Al-Lisan',
+                makhrajRinci: 'Ujung lidah sejajar di atas gigi seri bawah.',
+                sifatOpposite: { hamsJahr: 'Hams', syiddahRakhawah: 'Rakhawah', istilaIstifal: 'Istifal', ithbaqInfitah: 'Infitah', idzlaqIshmat: 'Ishmat' },
+                sifatTunggal: ['Shafir'],
+                lahnTips: 'Desis tajam accompanied hembusan nafas yang melimpah.'
+            },
+            {
+                symbol: 'ش', name: 'Syin', transliterasi: 'Syin',
+                harakat: { fathah: 'شَ', kasrah: 'شِ', dhammah: 'شُ', sukun: 'أَشْ' },
+                makhrajUtama: 'Al-Lisan',
+                makhrajRinci: 'Tengah lidah terangkat ke langit-langit keras.',
+                sifatOpposite: { hamsJahr: 'Hams', syiddahRakhawah: 'Rakhawah', istilaIstifal: 'Istifal', ithbaqInfitah: 'Infitah', idzlaqIshmat: 'Ishmat' },
+                sifatTunggal: ['Tafasysyi'],
+                lahnTips: 'Memiliki sifat khas Tafasysyi (angin menyebar luas di dalam rongga mulut).'
+            },
+            {
+                symbol: 'ص', name: 'Shad', transliterasi: 'Shad',
+                harakat: { fathah: 'صَ', kasrah: 'صِ', dhammah: 'صُ', sukun: 'أَصْ' },
+                makhrajUtama: 'Al-Lisan',
+                makhrajRinci: 'Ujung lidah sejajar gigi seri bawah, pangkal lidah terangkat (Isti\'la & Ithbaq).',
+                sifatOpposite: { hamsJahr: 'Hams', syiddahRakhawah: 'Rakhawah', istilaIstifal: 'Isti\'la', ithbaqInfitah: 'Ithbaq', idzlaqIshmat: 'Ishmat' },
+                sifatTunggal: ['Shafir'],
+                lahnTips: 'Huruf tebal dan bulat. Jangan memonyongkan bibir secara berlebihan, cukup angkat pangkal lidah.'
+            },
+            {
+                symbol: 'ض', name: 'Dhad', transliterasi: 'Dhad',
+                harakat: { fathah: 'ضَ', kasrah: 'ضِ', dhammah: 'ضُ', sukun: 'أَضْ' },
+                makhrajUtama: 'Al-Lisan',
+                makhrajRinci: 'Tepi lidah menyentuh gusi geraham atas.',
+                sifatOpposite: { hamsJahr: 'Jahar', syiddahRakhawah: 'Rakhawah', istilaIstifal: 'Isti\'la', ithbaqInfitah: 'Ithbaq', idzlaqIshmat: 'Ishmat' },
+                sifatTunggal: ['Istithalah'],
+                lahnTips: 'Memiliki sifat Istithalah (suara memanjang menyusuri tepi lidah). Jangan dibaca seperti Zha atau Dal tebal.'
+            },
+            {
+                symbol: 'ط', name: 'Tha', transliterasi: 'Tha',
+                harakat: { fathah: 'طَ', kasrah: 'طِ', dhammah: 'طُ', sukun: 'أَطْ' },
+                makhrajUtama: 'Al-Lisan',
+                makhrajRinci: 'Ujung lidah menyentuh pangkal gigi seri atas (lidah terangkat penuh).',
+                sifatOpposite: { hamsJahr: 'Jahar', syiddahRakhawah: 'Syiddah', istilaIstifal: 'Isti\'la', ithbaqInfitah: 'Ithbaq', idzlaqIshmat: 'Ishmat' },
+                sifatTunggal: ['Qalqalah'],
+                lahnTips: 'Huruf paling kuat dalam hijaiyah. Pantulan Qalqalah-nya sangat tebal dan tegas.'
+            },
+            {
+                symbol: 'ظ', name: 'Zha', transliterasi: 'Zha',
+                harakat: { fathah: 'ظَ', kasrah: 'ظِ', dhammah: 'ظُ', sukun: 'أَظْ' },
+                makhrajUtama: 'Al-Lisan',
+                makhrajRinci: 'Ujung lidah keluar sedikit menyentuh ujung gigi seri atas (tebal Ithbaq).',
+                sifatOpposite: { hamsJahr: 'Jahar', syiddahRakhawah: 'Rakhawah', istilaIstifal: 'Isti\'la', ithbaqInfitah: 'Ithbaq', idzlaqIshmat: 'Ishmat' },
+                sifatTunggal: [],
+                lahnTips: 'Pengucapan mirip Dzal (ذ) namun versi tebal (Ithbaq & Isti\'la).'
+            },
+            {
+                symbol: 'ع', name: 'Ain', transliterasi: '\'Ain',
+                harakat: { fathah: 'عَ', kasrah: 'عِ', dhammah: 'عُ', sukun: 'أَعْ' },
+                makhrajUtama: 'Al-Halq',
+                makhrajRinci: 'Tengah tenggorokan (Wasathul Halq).',
+                sifatOpposite: { hamsJahr: 'Jahar', syiddahRakhawah: 'Tawassuth', istilaIstifal: 'Istifal', ithbaqInfitah: 'Infitah', idzlaqIshmat: 'Ishmat' },
+                sifatTunggal: [],
+                lahnTips: 'Suara agak ditekan di tengah tenggorokan. Jangan dibaca seperti Hamzah (أ).'
+            },
+            {
+                symbol: 'غ', name: 'Ghain', transliterasi: 'Ghain',
+                harakat: { fathah: 'غَ', kasrah: 'غِ', dhammah: 'غُ', sukun: 'أَغْ' },
+                makhrajUtama: 'Al-Halq',
+                makhrajRinci: 'Pangkal tenggorokan teratas (Adnal Halq).',
+                sifatOpposite: { hamsJahr: 'Jahar', syiddahRakhawah: 'Rakhawah', istilaIstifal: 'Isti\'la', ithbaqInfitah: 'Infitah', idzlaqIshmat: 'Ishmat' },
+                sifatTunggal: [],
+                lahnTips: 'Suara mengalir tebal seperti kumur-kumur halus (gargling).'
+            },
+            {
+                symbol: 'ف', name: 'Fa', transliterasi: 'Fa',
+                harakat: { fathah: 'فَ', kasrah: 'فِ', dhammah: 'فُ', sukun: 'أَفْ' },
+                makhrajUtama: 'Asy-Syafatain',
+                makhrajRinci: 'Bibir bawah bagian dalam menyentuh ujung gigi seri atas.',
+                sifatOpposite: { hamsJahr: 'Hams', syiddahRakhawah: 'Rakhawah', istilaIstifal: 'Istifal', ithbaqInfitah: 'Infitah', idzlaqIshmat: 'Idzlaq' },
+                sifatTunggal: [],
+                lahnTips: 'Pastikan hembusan nafas mengalir melalui celah bibir dan gigi.'
+            },
+            {
+                symbol: 'ق', name: 'Qaf', transliterasi: 'Qaf',
+                harakat: { fathah: 'قَ', kasrah: 'قِ', dhammah: 'قُ', sukun: 'أَقْ' },
+                makhrajUtama: 'Al-Lisan',
+                makhrajRinci: 'Pangkal lidah paling belakang menempel langit-langit lunak.',
+                sifatOpposite: { hamsJahr: 'Jahar', syiddahRakhawah: 'Syiddah', istilaIstifal: 'Isti\'la', ithbaqInfitah: 'Infitah', idzlaqIshmat: 'Ishmat' },
+                sifatTunggal: ['Qalqalah'],
+                lahnTips: 'Suara tebal dan mantap. Dipantulkan tebal saat sukun.'
+            },
+            {
+                symbol: 'ك', name: 'Kaf', transliterasi: 'Kaf',
+                harakat: { fathah: 'كَ', kasrah: 'كِ', dhammah: 'كُ', sukun: 'أَكْ' },
+           
